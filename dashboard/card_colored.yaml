@@ -1,0 +1,69 @@
+# Requires card-mod or UIX for the colored backgrounds.
+# If colors don't show, change ha-card to hui-card in each style line.
+type: vertical-stack
+cards:
+  - type: grid
+    columns: 2
+    square: false
+    cards:
+      - type: button
+        name: EVACUATE
+        icon: mdi:exit-run
+        tap_action:
+          action: perform-action
+          perform_action: script.alert_lights
+          data:
+            mode: evacuate
+          confirmation:
+            text: Start the evacuation alert?
+        card_mod:
+          style: |
+            ha-card { background: #cc2222 !important; }
+      - type: button
+        name: ALL CLEAR
+        icon: mdi:check-circle
+        tap_action:
+          action: perform-action
+          perform_action: script.alert_lights
+          data:
+            mode: clear
+        card_mod:
+          style: |
+            ha-card { background: #33aa55 !important; }
+  - type: grid
+    columns: 3
+    square: false
+    cards:
+      - type: button
+        name: STORM
+        icon: mdi:weather-lightning
+        tap_action:
+          action: perform-action
+          perform_action: script.alert_lights
+          data:
+            mode: storm
+        card_mod:
+          style: |
+            ha-card { background: #9966cc !important; }
+      - type: button
+        name: WIND
+        icon: mdi:weather-windy
+        tap_action:
+          action: perform-action
+          perform_action: script.alert_lights
+          data:
+            mode: wind
+        card_mod:
+          style: |
+            ha-card { background: #00ccee !important; }
+      - type: button
+        name: HEAT
+        icon: mdi:thermometer-high
+        tap_action:
+          action: perform-action
+          perform_action: script.alert_lights
+          data:
+            mode: heat
+        card_mod:
+          style: |
+            ha-card { background: #ff9933 !important; }

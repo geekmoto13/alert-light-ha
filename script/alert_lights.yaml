@@ -1,0 +1,94 @@
+# Alert Lights - Home Assistant script
+# Import: Settings > Automations & Scenes > Scripts > Add Script > Create new script
+# > three-dot menu > Edit in YAML > replace everything with this file > Save.
+# Name it "Alert Lights" so the entity ID becomes script.alert_lights (the dashboard cards expect that).
+# NOTE: the UI editor drops comments when you save. Keep this file as your reference copy.
+alias: Alert Lights
+description: Uses one or more lights to show weather or emergency status
+mode: restart
+fields:
+  mode:
+    name: Mode
+    description: evacuate, storm, wind, heat, or clear
+    required: true
+    selector:
+      select:
+        options:
+          - evacuate
+          - storm
+          - wind
+          - heat
+          - clear
+variables:
+  # ---- EDIT THESE ----
+  # Lights to use. A group (ZHA group, Light Group helper) keeps several bulbs in sync.
+  lights:
+    - light.your_alert_light_or_group
+  # Notification service for the evacuation alert (mobile app: notify.mobile_app_<your_device>).
+  notify_service: notify.notify
+  flash_seconds: 120   # how long the evacuation flash runs (one flash per second)
+  fade_seconds: 0      # 0 = hard on/off snap. Some bulbs ignore this.
+  brightness: 200      # 1-255 for the steady weather colors
+  colors:              # [red, green, blue] 0-255 per mode
+    storm: [128, 0, 255]
+    wind: [0, 220, 255]
+    heat: [255, 100, 0]
+  # ---- END EDIT ----
+sequence:
+  - choose:
+      - conditions: "{{ mode == 'evacuate' }}"
+        sequence:
+          - action: "{{ notify_service }}"
+            data:
+              title: EMERGENCY - EVACUATE
+              message: Evacuation alert activated. Leave now.
+              data:
+                # iOS Critical Alert (bypasses Do Not Disturb). Remove if you don't want that.
+                push:
+                  sound:
+                    name: default
+                    critical: 1
+                    volume: 1.0
+                # Android: deliver immediately
+                priority: high
+                ttl: 0
+          - repeat:
+              count: "{{ flash_seconds }}"
+              sequence:
+                - action: light.turn_on
+                  target:
+                    entity_id: "{{ lights }}"
+                  data:
+                    rgb_color: [255, 0, 0]
+                    brightness: 255
+                    transition: "{{ fade_seconds }}"
+                - delay: "00:00:00.5"
+                - action: light.turn_off
+                  target:
+                    entity_id: "{{ lights }}"
+                  data:
+                    transition: "{{ fade_seconds }}"
+                - delay: "00:00:00.5"
+      - conditions: "{{ mode == 'clear' }}"
+        sequence:
+          - action: light.turn_on
+            target:
+              entity_id: "{{ lights }}"
+            data:
+              rgb_color: [0, 255, 0]
+              brightness: "{{ brightness }}"
+          - delay: "00:00:05"
+          # Return to plain white. Swap for light.turn_off if you prefer the lights off.
+          - action: light.turn_on
+            target:
+              entity_id: "{{ lights }}"
+            data:
+              color_temp_kelvin: 4000
+              brightness: 255
+    default:
+      - action: light.turn_on
+        target:
+          entity_id: "{{ lights }}"
+        data:
+          rgb_color: "{{ colors[mode] }}"
+          brightness: "{{ brightness }}"
